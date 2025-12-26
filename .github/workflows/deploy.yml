@@ -1,0 +1,42 @@
+name: Deploy Blog
+
+on:
+    push:
+        branches: [main] # 监听代码仓库变动
+    repository_dispatch: # 关键：监听来自内容仓库的远程触发
+        types: [content_update]
+    workflow_dispatch: # 允许手动触发
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@v4
+              with:
+                  submodules: "recursive" # 关键：拉取子模块内容
+                  token: ${{ secrets.CONTENT_REPO_TOKEN }}
+
+            - name: Setup Node
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 20
+
+            - name: Install Pnpm
+              uses: pnpm/action-setup@v3
+              with:
+                  version: 8
+
+            - name: Install Dependencies
+              run: pnpm install
+
+            - name: Sync Content
+              run: pnpm run sync-content
+              env:
+                  USE_SUBMODULE: true
+                  CONTENT_REPO_URL: ${{ secrets.CONTENT_REPO_URL }}
+
+            - name: Build
+              run: pnpm run build
+              # ... 后续接你的部署逻辑（如部署到 GitHub Pages/Vercel 等）
+
