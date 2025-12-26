@@ -7,7 +7,7 @@ on:
     push:
         branches: [master] # 确保与你截图中的 master 分支一致
     repository_dispatch: # 响应来自内容仓库的信号
-        types: [content-updated] # 注意：此处需与内容仓库 notify.yml 中的 event-type 保持一致
+        types: [content-update] # 注意：此处需与内容仓库 notify.yml 中的 event-type 保持一致
     workflow_dispatch:
 
 jobs:
@@ -31,7 +31,7 @@ jobs:
                   version: 8
 
             - name: Install Dependencies
-              run: pnpm install
+              run: pnpm install --frozen-lockfile
 
             - name: Build site
               run: pnpm run build
