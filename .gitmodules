@@ -1,0 +1,3 @@
+[submodule "content"]
+	path = content
+	url = https://github.com/XueJie1/Mizuki-Content.git
