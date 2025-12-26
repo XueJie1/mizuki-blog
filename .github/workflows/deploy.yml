@@ -2,10 +2,10 @@ name: Deploy Blog
 
 on:
     push:
-        branches: [main] # 监听代码仓库变动
-    repository_dispatch: # 关键：监听来自内容仓库的远程触发
-        types: [content_update]
-    workflow_dispatch: # 允许手动触发
+        branches: [master] # 确保与你截图中的 master 分支一致
+    repository_dispatch: # 响应来自内容仓库的信号
+        types: [content-updated] # 注意：此处需与内容仓库 notify.yml 中的 event-type 保持一致
+    workflow_dispatch:
 
 jobs:
     build:
@@ -14,8 +14,8 @@ jobs:
             - name: Checkout Code
               uses: actions/checkout@v4
               with:
-                  submodules: "recursive" # 关键：拉取子模块内容
-                  token: ${{ secrets.CONTENT_REPO_TOKEN }}
+                  submodules: "recursive" # 开启子模块拉取
+                  token: ${{ secrets.CONTENT_REPO_TOKEN }} # 使用 PAT 保证拉取权限
 
             - name: Setup Node
               uses: actions/setup-node@v4
@@ -30,13 +30,16 @@ jobs:
             - name: Install Dependencies
               run: pnpm install
 
-            - name: Sync Content
-              run: pnpm run sync-content
-              env:
-                  USE_SUBMODULE: true
-                  CONTENT_REPO_URL: ${{ secrets.CONTENT_REPO_URL }}
-
-            - name: Build
+            - name: Build site
               run: pnpm run build
-              # ... 后续接你的部署逻辑（如部署到 GitHub Pages/Vercel 等）
+              env:
+                  # 核心配置：必须在这里注入环境变量，否则 build 会跳过内容同步
+                  ENABLE_CONTENT_SYNC: true
+                  CONTENT_REPO_URL: ${{ secrets.CONTENT_REPO_URL }}
+                  USE_SUBMODULE: true
 
+            # 如果你部署到 GitHub Pages，这里通常会有后续的上传步骤
+            - name: Upload artifact
+              uses: actions/upload-pages-artifact@v3
+              with:
+                  path: ./dist
